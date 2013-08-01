@@ -3,10 +3,12 @@ from setuptools import setup, find_packages
 
 
 install_requires = [
-    'venusian'
+    'venusian',
+    'soklog',
 ]
 
 dependency_links = [
+    'https://github.com/socek/soklog/tarball/master#egg=soklog-0.1',
 ]
 
 if __name__ == '__main__':
