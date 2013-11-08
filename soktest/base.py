@@ -1,27 +1,58 @@
 import unittest
+from soktest.error import NameAlreadyExists
 
 
 class TestCaseType(type):
 
+    @classmethod
+    def assign_groups(cls, test):
+        for group in test.groups:
+            if not group in TestCase._alltests_groups:
+                TestCase._alltests_groups[group] = []
+
+            TestCase._alltests_groups[group].append(test)
+
+    @classmethod
+    def validate_name(cls, fullname):
+        keys = TestCase._alltests_dict.keys()
+        if fullname in keys:
+            raise NameAlreadyExists(fullname)
+
+    @classmethod
+    def add_test_to_alltests(cls, name, test):
+        keys = TestCase._alltests_dict.keys()
+        if name in keys:
+            # if there is a class with the same name, that means we can not find
+            # a class only by its name
+            TestCase._alltests_dict[name] = None
+        else:
+            TestCase._alltests_dict[name] = test
+
+    @classmethod
+    def get_full_name(cls, dct, name):
+        return '.'.join([str(dct['__module__']), name])
+
+    @classmethod
+    def init_task(cls, task, name, dct):
+        fullname = cls.get_full_name(dct, name)
+        if 'base' not in dct or dct['base'] == False:
+            cls.validate_name(fullname)
+            cls.add_test_to_alltests(name, task)
+            cls.assign_groups(task)
+            TestCase._alltests_dict[fullname] = task
+            TestCase._alltests.append(task)
+
     def __init__(cls, name, bases, dct):
         super(TestCaseType, cls).__init__(name, bases, dct)
-        fullname = '.'.join([str(dct['__module__']), name])
-        if 'base' not in dct or dct['base'] == False:
-            keys = TestCase.alltests_dict.keys()
-            if fullname in keys:
-                raise RuntimeError(
-                    'Name "%s" defined more the once.' % (name,))
-            if name in keys:
-                TestCase.alltests_dict[name] = None
-            else:
-                TestCase.alltests_dict[name] = cls
-            TestCase.alltests.append(cls)
-            TestCase.alltests_dict[fullname] = cls
+        TestCaseType.init_task(cls, name, dct)
 
 
 class TestCase(unittest.TestCase):
 
     __metaclass__ = TestCaseType
+    _alltests = []
+    _alltests_dict = {}
+    _alltests_groups = {}
+
     base = True
-    alltests = []
-    alltests_dict = {}
+    groups = ('unit',)
