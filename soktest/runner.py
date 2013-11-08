@@ -4,11 +4,65 @@ from os import path
 from sys import argv
 
 import venusian
+from soklog import init as log_init
 
 from soktest.base import TestCase
 
 
 class TestRunner(object):
+
+    class _PrepereSpecyficTestCases(object):
+
+        def __init__(self, suite, tests_names):
+            self.suite = suite
+            self.tests_names = tests_names
+
+        def unpack_name(self, name):
+            tab = name.split(':')
+            if len(tab) < 2:
+                tab.append(None)
+            return tab
+
+        def get_test_case(self, name):
+            try:
+                return TestCase._alltests_dict[name]
+            except KeyError:
+                names = '\n\t'.join(TestCase._alltests_dict.keys())
+                raise RuntimeError(
+                    'Bad test name: %s. Use one of:\n\t%s' % (name, names)
+                )
+
+        def validate_test_case(self, test_case, name):
+            if test_case is None:
+                filter_names = lambda test_name: test_name.endswith(
+                    name) and test_name != name
+                names = '\n\t'.join(filter(
+                    filter_names, TestCase._alltests_dict.keys()))
+                raise RuntimeError(
+                    'Test name is ambiguous. Please provide full package name:\n\t%s' % (
+                        names,)
+                )
+
+        def prepere_suite(self, test_case, method_name):
+            if method_name is None:
+                return self.suite.loadTestsFromTestCase(test_case)
+            else:
+                suite = unittest.TestSuite()
+                case = test_case(method_name)
+                suite.addTest(case)
+                return suite
+
+        def __call__(self):
+            test_cases = []
+            for name in self.tests_names:
+                name, method_name = self.unpack_name(name)
+                test_case = self.get_test_case(name)
+                self.validate_test_case(test_case, name)
+                test_cases.append(
+                    self.prepere_suite(test_cases, method_name)
+                )
+
+            return test_cases
 
     def __init__(self, module, log_file_name='test.log', log_file_dir=''):
         self.module = module
@@ -24,65 +78,34 @@ class TestRunner(object):
 
     def prepere_all_test_cases(self, suite):
         test_cases = []
-        for test_case in TestCase.alltests:
+        for test_case in TestCase._alltests:
             test_cases.append(
                 suite.loadTestsFromTestCase(test_case)
             )
         return test_cases
 
     def prepere_specyfic_test_cases(self, suite, tests_names):
-        def unpack_name(name):
-            tab = name.split(':')
-            if len(tab) < 2:
-                tab.append(None)
-            return tab
+        return self._PrepereSpecyficTestCases(suite, tests_names)()
 
-        test_cases = []
-        for name in tests_names:
-            name, method_name = unpack_name(name)
+    def get_log_filename(self):
+        if path.exists(self.log_file_dir):
+            return path.join(self.log_file_dir, self.log_file_name)
+        else:
+            return self.log_file_name
 
-            try:
-                test_case = TestCase.alltests_dict[name]
-            except KeyError:
-                names = '\n\t'.join(TestCase.alltests_dict.keys())
-                raise RuntimeError(
-                    'Bad test name: %s. Use one of:\n\t%s' % (name, names)
-                )
-            if test_case is None:
-                filter_names = lambda test_name: test_name.endswith(
-                    name) and test_name != name
-                names = '\n\t'.join(filter(
-                    filter_names, TestCase.alltests_dict.keys()))
-                raise RuntimeError(
-                    'Test name is ambiguous. Please provide full package name:\n\t%s' % (
-                        names,)
-                )
-            if method_name is None:
-                test_cases.append(
-                    suite.loadTestsFromTestCase(test_case)
-                )
-            else:
-                suite = unittest.TestSuite()
-                suite.addTest(test_case(method_name))
-                test_cases.append(suite)
-
-        return test_cases
+    def get_logger(self):
+        return logging.getLogger(self.module)
 
     def start_logging(self):
-        from soklog import init
-        if path.exists(self.log_file_dir):
-            filename = path.join(self.log_file_dir, self.log_file_name)
-        else:
-            filename = self.log_file_name
-
-        init(self.module, 'sok_test')
+        filename = self.get_log_filename()
+        log_init(self.module, 'sok_test')
 
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)-15s:%(message)s",
             filename=filename,
         )
-        logging.getLogger('finlog').info('\n\t*** TESTING STARTED ***')
+        self.get_logger().info('\n\t*** TESTING STARTED ***')
 
     def get_all_test_suite(self):
         self.start_logging()
@@ -98,14 +121,14 @@ class TestRunner(object):
     def additional_preparation(self):
         pass
 
-    def update_verbosity(self, force_number=None):
-        if force_number:
-            self.force_number = force_number
-        else:
+    def update_verbosity(self, verbosity=None):
+        if verbosity is None:
             if len(self.tests) == 0:
                 self.verbosity = 1
             else:
                 self.verbosity = 2
+        else:
+            self.verbosity = verbosity
 
     def update_tests_from_argv(self):
         self.tests = argv[1:]
