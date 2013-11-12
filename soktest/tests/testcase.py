@@ -133,3 +133,78 @@ class TestCaseTest(unittest.TestCase):
         self.assertEqual({}, TestCase._alltests_groups)
         self.assertEqual(True, TestCase.base)
         self.assertEqual(('unit',), TestCase.groups)
+
+    @patch.object(TestCase, '_alltests', [])
+    @patch.object(TestCase, '_alltests_dict', {})
+    def test_start_patchers(self):
+        class TestCaseExample(TestCase):
+            pass
+        case = TestCaseExample('_init_patchers')
+        case.patchers = {
+            'one': MagicMock(),
+            'two': MagicMock(),
+        }
+        case.mocks = {}
+
+        case._start_patchers()
+
+        for name in ['one', 'two']:
+            patcher = case.patchers[name]
+            mock = case.mocks[name]
+            patcher.start.assert_called_once_with()
+            self.assertEqual(mock, patcher.start.return_value)
+
+    @patch.object(TestCase, '_alltests', [])
+    @patch.object(TestCase, '_alltests_dict', {})
+    def test_stop_patchers(self):
+        class TestCaseExample(TestCase):
+            pass
+        case = TestCaseExample('_init_patchers')
+        case.patchers = {
+            'one': MagicMock(),
+            'two': MagicMock(),
+        }
+
+        case._stop_patchers()
+
+        for name in ['one', 'two']:
+            patcher = case.patchers[name]
+            patcher.stop.assert_called_once_with()
+
+    @patch.object(TestCase, '_alltests', [])
+    @patch.object(TestCase, '_alltests_dict', {})
+    def test_setUpPatchers(self):
+        class TestCaseExample(TestCase):
+            pass
+
+        case = TestCaseExample('_init_patchers')
+        with patch.object(case, '_init_patchers') as init_patchers:
+            with patch.object(case, '_start_patchers') as start_patchers:
+                case._setUpPatchers()
+
+                self.assertEqual({}, case.patchers)
+                self.assertEqual({}, case.mocks)
+
+                init_patchers.assert_called_once_with()
+                start_patchers.assert_called_once_with()
+
+    @patch.object(TestCase, '_alltests', [])
+    @patch.object(TestCase, '_alltests_dict', {})
+    def test_setUp(self):
+        class TestCaseExample(TestCase):
+            pass
+
+        case = TestCaseExample('_init_patchers')
+        with patch.object(case, '_setUpPatchers') as setUpPatchers:
+                case.setUp()
+
+                setUpPatchers.assert_called_once_with()
+
+    @patch.object(TestCase, '_alltests', [])
+    @patch.object(TestCase, '_alltests_dict', {})
+    def test_init_patchers(self):
+        class TestCaseExample(TestCase):
+            pass
+
+        case = TestCaseExample('_init_patchers')
+        self.assertEqual(None, case._init_patchers())

@@ -56,3 +56,26 @@ class TestCase(unittest.TestCase):
 
     base = True
     groups = ('unit',)
+
+    def _init_patchers(self):
+        pass
+
+    def _start_patchers(self):
+        for name, patcher in self.patchers.items():
+            self.mocks[name] = patcher.start()
+
+    def _stop_patchers(self):
+        for name, patcher in self.patchers.items():
+            patcher.stop()
+
+    def _setUpPatchers(self):
+        self.patchers = {}
+        self.mocks = {}
+
+        self._init_patchers()
+        self._start_patchers()
+
+    def setUp(self):
+        super(TestCase, self).setUp()
+        self._setUpPatchers()
+
