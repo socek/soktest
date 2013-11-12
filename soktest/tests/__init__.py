@@ -18,10 +18,7 @@ def get_all_test_suite():
     suite = unittest.TestLoader()
     prepered_all_test_cases = []
     for test_case in all_test_cases:
-        print test_case
         prepered_all_test_cases.append(
             suite.loadTestsFromTestCase(test_case)
         )
     return unittest.TestSuite(prepered_all_test_cases)
-
-print RunnerTests.get_all()
