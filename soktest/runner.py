@@ -94,7 +94,7 @@ class TestRunner(object):
             return self.log_file_name
 
     def get_logger(self):
-        return logging.getLogger(self.module)
+        return logging.getLogger(str(self.module))
 
     def start_logging(self):
         filename = self.get_log_filename()
