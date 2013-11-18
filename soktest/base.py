@@ -62,11 +62,14 @@ class TestCase(unittest.TestCase):
 
     def _start_patchers(self):
         for name, patcher in self.patchers.items():
-            self.mocks[name] = patcher.start()
+            self.add_patch(name, patcher)
 
     def _stop_patchers(self):
         for name, patcher in self.patchers.items():
             patcher.stop()
+
+    def add_patch(self, name, patcher):
+        self.mocks[name] = patcher.start()
 
     def _setUpPatchers(self):
         self.patchers = {}
