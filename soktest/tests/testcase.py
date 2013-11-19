@@ -4,6 +4,10 @@ from soktest.base import TestCase, TestCaseType
 from soktest.error import NameAlreadyExists
 
 
+class TestCaseExample(TestCase):
+    pass
+
+
 class TestCaseTypeTests(unittest.TestCase):
 
     @patch('soktest.base.TestCase')
@@ -128,17 +132,22 @@ class TestCaseTypeTests(unittest.TestCase):
 class TestCaseTest(unittest.TestCase):
 
     def test_class_vars(self):
-        self.assertEqual([], TestCase._alltests)
-        self.assertEqual({}, TestCase._alltests_dict)
-        self.assertEqual({}, TestCase._alltests_groups)
+        self.assertEqual([TestCaseExample], TestCase._alltests)
+        self.assertEqual(
+            {
+                'soktest.tests.testcase.TestCaseExample': TestCaseExample,
+                'TestCaseExample': TestCaseExample,
+            },
+            TestCase._alltests_dict)
+        self.assertEqual({
+            'unit': [TestCaseExample]
+        }, TestCase._alltests_groups)
         self.assertEqual(True, TestCase.base)
         self.assertEqual(('unit',), TestCase.groups)
 
     @patch.object(TestCase, '_alltests', [])
     @patch.object(TestCase, '_alltests_dict', {})
     def test_start_patchers(self):
-        class TestCaseExample(TestCase):
-            pass
         case = TestCaseExample('_init_patchers')
         case.patchers = {
             'one': MagicMock(),
@@ -157,8 +166,6 @@ class TestCaseTest(unittest.TestCase):
     @patch.object(TestCase, '_alltests', [])
     @patch.object(TestCase, '_alltests_dict', {})
     def test_stop_patchers(self):
-        class TestCaseExample(TestCase):
-            pass
         case = TestCaseExample('_init_patchers')
         case.patchers = {
             'one': MagicMock(),
@@ -174,9 +181,6 @@ class TestCaseTest(unittest.TestCase):
     @patch.object(TestCase, '_alltests', [])
     @patch.object(TestCase, '_alltests_dict', {})
     def test_setUpPatchers(self):
-        class TestCaseExample(TestCase):
-            pass
-
         case = TestCaseExample('_init_patchers')
         with patch.object(case, '_init_patchers') as init_patchers:
             with patch.object(case, '_start_patchers') as start_patchers:
@@ -191,9 +195,6 @@ class TestCaseTest(unittest.TestCase):
     @patch.object(TestCase, '_alltests', [])
     @patch.object(TestCase, '_alltests_dict', {})
     def test_setUp(self):
-        class TestCaseExample(TestCase):
-            pass
-
         case = TestCaseExample('_init_patchers')
         with patch.object(case, '_setUpPatchers') as setUpPatchers:
                 case.setUp()
@@ -203,8 +204,47 @@ class TestCaseTest(unittest.TestCase):
     @patch.object(TestCase, '_alltests', [])
     @patch.object(TestCase, '_alltests_dict', {})
     def test_init_patchers(self):
-        class TestCaseExample(TestCase):
-            pass
-
         case = TestCaseExample('_init_patchers')
         self.assertEqual(None, case._init_patchers())
+
+    def test_add_patcher(self):
+        case = TestCaseExample('_init_patchers')
+        case._setUpPatchers()
+        patcher = MagicMock()
+
+        case._add_patcher('name1', patcher)
+
+        self.assertEqual(patcher, case.patchers['name1'])
+        self.assertEqual(patcher.start.return_value, case.mocks['name1'])
+        patcher.start.assert_called_once_with()
+
+    def test_add_mock(self):
+        case = TestCaseExample('_init_patchers')
+        case._setUpPatchers()
+        with patch('soktest.base.patch') as patch_mock:
+            case.add_mock('somewhere.i.belong', 'arg1', kw='2')
+            patch_mock.assert_called_once_with(
+                'somewhere.i.belong', 'arg1', kw='2')
+            patcher = patch_mock.return_value
+            self.assertEqual(patcher, case.patchers['belong'])
+            self.assertEqual(patcher.start.return_value, case.mocks['belong'])
+
+    def test_add_mock_object(self):
+        class SampleCls(object):
+            something = 1
+        case = TestCaseExample('_init_patchers')
+        case._setUpPatchers()
+        obj = SampleCls()
+
+        with patch.object(patch, 'object') as patch_mock:
+            case.add_mock_object(obj, 'something', kw='2')
+            patch_mock.assert_called_once_with(
+                obj, 'something', kw='2')
+            patcher = patch_mock.return_value
+            self.assertEqual(patcher, case.patchers['something'])
+            self.assertEqual(
+                patcher.start.return_value, case.mocks['something'])
+
+        case.add_mock_object(obj, 'something')
+        self.assertEqual(case.mocks['something'], obj.something)
+        case._stop_patchers()

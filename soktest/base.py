@@ -1,5 +1,6 @@
 import unittest
 from soktest.error import NameAlreadyExists
+from mock import patch
 
 
 class TestCaseType(type):
@@ -62,14 +63,24 @@ class TestCase(unittest.TestCase):
 
     def _start_patchers(self):
         for name, patcher in self.patchers.items():
-            self.add_patch(name, patcher)
+            self.mocks[name] = patcher.start()
 
     def _stop_patchers(self):
         for name, patcher in self.patchers.items():
             patcher.stop()
 
-    def add_patch(self, name, patcher):
+    def _add_patcher(self, name, patcher):
+        self.patchers[name] = patcher
         self.mocks[name] = patcher.start()
+
+    def add_mock(self, url, *args, **kwargs):
+        name = url.split('.')[-1]
+        patcher = patch(url, *args, **kwargs)
+        self._add_patcher(name, patcher)
+
+    def add_mock_object(self, obj, name, *args, **kwargs):
+        patcher = patch.object(obj, name, *args, **kwargs)
+        self._add_patcher(name, patcher)
 
     def _setUpPatchers(self):
         self.patchers = {}
@@ -81,4 +92,3 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         super(TestCase, self).setUp()
         self._setUpPatchers()
-
