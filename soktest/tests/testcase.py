@@ -172,6 +172,8 @@ class TestCaseTest(unittest.TestCase):
             'two': MagicMock(),
         }
 
+        case.patchers['two'].stop.side_effect = AttributeError
+
         case._stop_patchers()
 
         for name in ['one', 'two']:

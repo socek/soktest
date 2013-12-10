@@ -67,7 +67,11 @@ class TestCase(unittest.TestCase):
 
     def _stop_patchers(self):
         for name, patcher in self.patchers.items():
-            patcher.stop()
+            try:
+                patcher.stop()
+            # "can't delete attribute" can be raised after patch.object
+            except AttributeError:
+                pass  # ignore it
 
     def _add_patcher(self, name, patcher):
         self.patchers[name] = patcher
