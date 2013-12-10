@@ -201,6 +201,13 @@ class TestCaseTest(unittest.TestCase):
 
                 setUpPatchers.assert_called_once_with()
 
+    def test_tearDown(self):
+        case = TestCaseExample('_init_patchers')
+        with patch.object(case, '_stop_patchers') as stop_patchers:
+            case.tearDown()
+
+            stop_patchers.assert_called_once_with()
+
     @patch.object(TestCase, '_alltests', [])
     @patch.object(TestCase, '_alltests_dict', {})
     def test_init_patchers(self):

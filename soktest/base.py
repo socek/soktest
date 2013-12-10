@@ -92,3 +92,7 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         super(TestCase, self).setUp()
         self._setUpPatchers()
+
+    def tearDown(self):
+        super(TestCase, self).tearDown()
+        self._stop_patchers()
