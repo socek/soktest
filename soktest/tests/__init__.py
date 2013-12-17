@@ -1,8 +1,8 @@
 import unittest
 import logging
 
-from testcase import TestCaseTypeTests, TestCaseTest
-from runner import RunnerTests, Runner_PrepereSpecyficTestCasesTests
+from .testcase import TestCaseTypeTests, TestCaseTest
+from .runner import RunnerTests, Runner_PrepereSpecyficTestCasesTests
 
 all_test_cases = [
     TestCaseTypeTests,

@@ -48,9 +48,8 @@ class TestCaseType(type):
         TestCaseType.init_task(cls, name, dct)
 
 
-class TestCase(unittest.TestCase):
+class TestCase(unittest.TestCase, metaclass = TestCaseType):
 
-    __metaclass__ = TestCaseType
     _alltests = []
     _alltests_dict = {}
     _alltests_groups = {}
