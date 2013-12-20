@@ -1,6 +1,7 @@
 import unittest
 from soktest.error import NameAlreadyExists
 from mock import patch
+from six import add_metaclass
 
 
 class TestCaseType(type):
@@ -48,9 +49,9 @@ class TestCaseType(type):
         TestCaseType.init_task(cls, name, dct)
 
 
+@add_metaclass(TestCaseType)
 class TestCase(unittest.TestCase):
 
-    __metaclass__ = TestCaseType
     _alltests = []
     _alltests_dict = {}
     _alltests_groups = {}

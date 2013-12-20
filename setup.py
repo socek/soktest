@@ -6,6 +6,7 @@ install_requires = [
     'venusian',
     'soklog',
     'mock',
+    'six',
 ]
 
 dependency_links = [
@@ -14,7 +15,7 @@ dependency_links = [
 
 if __name__ == '__main__':
     setup(name='soktest',
-          version='0.1',
+          version='0.1.1',
           author=['Dominik "Socek" Długajczy'],
           author_email=['msocek@gmail.com', ],
           packages=find_packages(),
