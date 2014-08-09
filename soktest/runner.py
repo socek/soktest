@@ -59,7 +59,7 @@ class TestRunner(object):
                 test_case = self.get_test_case(name)
                 self.validate_test_case(test_case, name)
                 test_cases.append(
-                    self.prepere_suite(test_cases, method_name)
+                    self.prepere_suite(test_case, method_name)
                 )
 
             return test_cases
