@@ -18,6 +18,7 @@ if __name__ == '__main__':
           version='0.1.2',
           author=['Dominik "Socek" Długajczy'],
           author_email=['msocek@gmail.com', ],
+          description='soktest',
           packages=find_packages(),
           install_requires=install_requires,
           dependency_links=dependency_links,
